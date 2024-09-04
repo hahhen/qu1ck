@@ -34,7 +34,7 @@ export async function POST(request) {
             const { data: estoque, error } = await supabase.from('estoque').select('quantidade, id').eq('id', ingrediente.id).single()
             await supabase.from('estoque').update({ quantidade: estoque.quantidade - ingrediente.quantidade }).eq('id', ingrediente.id)
             await supabase.from('estoque').update({ atualizado_em: (new Date()).toISOString() }).eq('id', ingrediente.id)
-            await supabase.from('pedido').update({ atualizado_em: (new Date()).toISOString(), situacao: "Confirmado"}).eq('id', newOrder.id)
+            await supabase.from('pedido').update({ atualizado_em: (new Date()).toISOString(), situacao: "Confirmado" }).eq('id', newOrder.id)
 
             if (error) {
                 console.error('Error updating estoque:', error);
@@ -45,6 +45,18 @@ export async function POST(request) {
     } catch (error) {
         console.error('Error updating estoque:', error);
         return Response.json({ error: 'Failed to update estoque' }, { status: 500 });
+    }
+
+    try {
+        await Promise.all(requestBody.ingredientes.map(async (ingrediente) => {
+            const { data: estoque, error } = await supabase.from('estoque').select('quantidade, id, quantidade_reserva, ingrediente').eq('id', ingrediente.id).single()
+            if (estoque.quantidade <= estoque.quantidade_reserva) {
+                await supabase.from('notificacao').insert({ mensagem: `O estoque de ${estoque.ingrediente} está acabando. Reestoque o mais rápido possível.`, tipo: "estoque" })
+            }
+        }))
+    } catch (error) {
+        console.error('Error inserting notificacao:', error);
+        return Response.json({ error: 'Failed to insert notificacao' }, { status: 500 });
     }
 
     return Response.json({ success: true });

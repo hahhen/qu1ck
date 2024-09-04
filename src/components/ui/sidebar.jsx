@@ -1,11 +1,13 @@
 'use client'
 
-import { ShoppingCart, X, ReceiptText } from 'lucide-react'
+import { ShoppingCart, X, ReceiptText, Bell } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from './button'
 import { atom, useAtom } from 'jotai'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
+import { Popover, PopoverContent, PopoverTrigger } from './popover'
+import Notifications from './notifications'
 
 export const sidebarOpenAtom = atom(false)
 
@@ -26,8 +28,9 @@ export default function Sidebar() {
                 </Button>
             </div>
             <nav className="p-4">
-                <div className='mb-5 w-full hidden lg:flex'>
+                <div className='mb-5 w-full hidden lg:flex justify-between'>
                     <Image src={"https://qu1ck.com.br/wp-content/uploads/2023/09/logo-qu1ck-site1.png"} width={128} height={50} />
+                    <Notifications />
                 </div>
                 <ul className="space-y-2">
                     <li>

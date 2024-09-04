@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/table"
 import { sidebarOpenAtom } from "@/components/ui/sidebar"
 import { useAtom } from "jotai"
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import Notifications from "@/components/ui/notifications"
 
 export default function Component() {
   const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom)
@@ -51,9 +53,12 @@ export default function Component() {
       {/* Header with burger menu */}
       <header className="bg-white shadow-sm lg:hidden">
         <div className="flex items-center justify-between p-4">
-          <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-            <Menu className="h-6 w-6" />
-          </Button>
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+              <Menu className="h-6 w-6" />
+            </Button>
+            <Notifications />
+          </div>
           <h1 className="text-xl font-semibold">Estoque</h1>
 
         </div>
@@ -93,7 +98,25 @@ export default function Component() {
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.id}</TableCell>
                     <TableCell>{product.ingrediente}</TableCell>
-                    <TableCell>{product.quantidade}&nbsp;{product.unidade_medida}</TableCell>
+                    {
+                      product.quantidade <= product.quantidade_reserva ?
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <TableCell class="p-2 flex items-center">
+                                <div className={"bg-destructive p-2 text-destructive-foreground rounded"}>
+                                  {product.quantidade}&nbsp;{product.unidade_medida}
+                                </div>
+                              </TableCell>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Estoque acabando</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        :
+                        <TableCell>{product.quantidade}&nbsp;{product.unidade_medida}</TableCell>
+                    }
                     <TableCell className="text-right">{formatDate(product.atualizado_em)}</TableCell>
                   </TableRow>
                 ))}
