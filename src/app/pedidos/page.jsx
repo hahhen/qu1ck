@@ -96,8 +96,8 @@ export default function Component() {
                                         <TableCell>{product.situacao}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                {product.pedido_tem_estoque.map((item) => (
-                                                    <span>
+                                                {product.pedido_tem_estoque.map((item, i) => (
+                                                    <span key={i}>
                                                         {item.quantidade}&nbsp;{item.estoque.unidade_medida}&nbsp;de&nbsp;{item.estoque.ingrediente}
                                                     </span>
                                                 ))}
