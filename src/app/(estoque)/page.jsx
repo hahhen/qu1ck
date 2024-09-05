@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table"
 import { sidebarOpenAtom } from "@/components/ui/sidebar"
 import { useAtom } from "jotai"
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import Notifications from "@/components/ui/notifications"
 import dayjs from "dayjs"
 
@@ -22,22 +23,22 @@ export default function Component() {
     // Estado global do sidebar
     const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom)
 
-    // Estado dos dados pedidos e loading
-    const [pedidos, setPedidos] = useState([])
+    // Estado dos dados de ingredientes e loading
+    const [ingredientes, setIngredientes] = useState([])
     const [loading, setLoading] = useState(false)
 
-    // Função assíncrona para buscar os pedidos
-    async function fetchPedidos() {
+    // Função assíncrona para buscar o estoque
+    async function fetchIngredientes() {
         setLoading(true)
-        let res = await fetch('/api/consulta_pedidos')
+        let res = await fetch('/api/consulta_estoque')
         let data = await res.json()
-        setPedidos(data.estoque)
+        setIngredientes(data.estoque)
         setLoading(false)
     }
 
     // Hook para buscar os pedidos ao carregar a página
     useEffect(() => {
-        fetchPedidos()
+        fetchIngredientes()
     }, [])
 
     // Função para abrir e fechar o sidebar
@@ -45,7 +46,6 @@ export default function Component() {
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Header with burger menu */}
             <header className="bg-white shadow-sm lg:hidden">
                 <div className="flex items-center justify-between p-4">
                     <div className="flex items-center">
@@ -54,14 +54,13 @@ export default function Component() {
                         </Button>
                         <Notifications />
                     </div>
-                    <h1 className="text-xl font-semibold">Pedidos</h1>
+                    <h1 className="text-xl font-semibold">Estoque</h1>
                 </div>
             </header>
 
-            {/* Main content area */}
             <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-8">
                 <div className="flex justify-between mb-4 items-end">
-                    <h1 className="text-2xl font-semibold hidden lg:block">Pedidos</h1>
+                    <h1 className="text-2xl font-semibold hidden lg:block">Estoque</h1>
                     <div className="flex items-center gap-2">
                         {loading && <svg class="w-4 h-4 text-gray-300 animate-spin" viewBox="0 0 64 64" fill="none"
                             xmlns="http://www.w3.org/2000/svg" width="24" height="24">
@@ -73,36 +72,42 @@ export default function Component() {
                                 stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-900">
                             </path>
                         </svg>}
-                        <Button size="sm" variant="outline" className={loading && "opacity-50"} onClick={fetchPedidos}><RefreshCcw size={15} />&nbsp;Atualizar</Button>
+                        <Button size="sm" variant="outline" className={loading && "opacity-50"} onClick={fetchIngredientes}><RefreshCcw size={15} />&nbsp;Atualizar</Button>
                     </div>
                 </div>
-                <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                <div className="bg-white shadow-md rounded-lg">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[100px]">ID</TableHead>
-                                    <TableHead>Situação</TableHead>
-                                    <TableHead className="w-[100px]">Itens</TableHead>
-                                    <TableHead className="text-right">Criado em</TableHead>
+                                    <TableHead>Nome</TableHead>
+                                    <TableHead className="w-[100px]">Quantidade</TableHead>
                                     <TableHead className="text-right">Atualizado em</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody className={`overflow-auto transition-all ${loading && "opacity-50"}`}>
-                                {pedidos.map((product) => (
+                                {ingredientes.map((product) => (
                                     <TableRow key={product.id}>
                                         <TableCell className="font-medium">{product.id}</TableCell>
-                                        <TableCell>{product.situacao}</TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                {product.pedido_tem_estoque.map((item, i) => (
-                                                    <span key={i}>
-                                                        {item.quantidade}&nbsp;{item.estoque.unidade_medida}&nbsp;de&nbsp;{item.estoque.ingrediente}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">{dayjs(product.criado_em).format('DD/MM/YYYY HH:mm:ss')}</TableCell>
+                                        <TableCell>{product.ingrediente}</TableCell>
+                                        {
+                                            product.quantidade <= product.quantidade_reserva ?
+                                                <TableCell class="p-2 align-middle">
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger className="h-full bg-destructive p-2 text-destructive-foreground rounded">
+                                                                {product.quantidade}&nbsp;{product.unidade_medida}
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Estoque acabando</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </TableCell>
+                                                :
+                                                <TableCell>{product.quantidade}&nbsp;{product.unidade_medida}</TableCell>
+                                        }
                                         <TableCell className="text-right">{dayjs(product.atualizado_em).format('DD/MM/YYYY HH:mm:ss')}</TableCell>
                                     </TableRow>
                                 ))}
